@@ -1,5 +1,6 @@
 package org.generation.main;
 
+import org.generation.exception.ContactoNotFoundException;
 import org.generation.model.Contacto;
 import org.generation.service.AgendaService;
 
@@ -24,7 +25,7 @@ public class Main {
                 2.- Lista de contactos
                 3.- Buscar contacto
                 4.- Eliminar contacto
-                5.- Espacio de mi agenda
+                5.- Espacio disponible de mi agenda
                 6.- Contacto existente en mi agenda
                 
                 0.- Salir
@@ -52,13 +53,17 @@ public class Main {
     }
 
     private static void existeContacto() {
-        System.out.println("\nIngresa nombre completo:");
-        String nombre = scanner.nextLine();
+        String nombre = validateInput("Ingresa nombre completo:");
 
-        Contacto contacto = service.buscaContacto(nombre);
-        if (service.existeContacto(contacto)) {
-            System.out.println("\nContacto existente en tu agenda");
+        try {
+            Contacto contacto = service.buscaContacto(nombre);
+            if (service.existeContacto(contacto)) {
+                System.out.println("Contacto existente en tu agenda");
+            }
+        } catch (ContactoNotFoundException e) {
+            System.out.println(e.getMessage());
         }
+
     }
 
     private static void agregarContacto() {
@@ -67,32 +72,29 @@ public class Main {
             return;
         }
 
-        String nombre = "";
-        while (nombre.trim().isEmpty()) {
-            System.out.println("\nIngresa nombre completo:");
-            nombre = scanner.nextLine();
-            if (nombre.trim().isEmpty()) {
-                System.out.println("El nombre no puede estar vacío. Inténtalo de nuevo.");
-            }
-        }
-
-        String numero = "";
-        while (numero.trim().isEmpty()) {
-            System.out.println("\nIngresa tu número de teléfono");
-            numero = scanner.nextLine();
-            if (numero.trim().isEmpty()) {
-                System.out.println("El numero no puede estar vacío. Inténtalo de nuevo.");
-            }
-        }
+        String nombre = validateInput("Ingresa nombre completo");
+        String numero = validateInput("Ingresa tu número de teléfono");
 
         Contacto contacto = new Contacto(nombre, numero);
         service.anadirContacto(contacto);
     }
 
+    private static String validateInput(String entryMsg) {
+        String entry = "";
+        while (entry.trim().isEmpty()) {
+            System.out.println("\n" + entryMsg);
+            entry = scanner.nextLine();
+            if (entry.trim().isEmpty()) {
+                System.out.println("El campo no puede estar vacío. Inténtalo de nuevo.");
+            }
+        }
+        return entry;
+    }
+
     private static void listaContactos() {
         System.out.println();
         if (service.listarContactos().isEmpty()) {
-            System.out.println("\nTu lista de contactos esta vacia.");
+            System.out.println("Tu lista de contactos esta vacia.");
             return;
         }
         List<Contacto> contactos = service.listarContactos();
@@ -102,17 +104,23 @@ public class Main {
     }
 
     private static void buscarContacto() {
-        System.out.println("\nIngresa el nombre del contacto a buscar:");
-        String buscarPorNombre = scanner.nextLine();
-        System.out.println("Contacto: " + service.buscaContacto(buscarPorNombre).getNuevoTelefono());
+        try {
+            String buscarPorNombre = validateInput("Ingresa el nombre del contacto a buscar:");
+            System.out.println("Contacto: " + service.buscaContacto(buscarPorNombre).getNuevoTelefono());
+        } catch (ContactoNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private static void eliminarContacto() {
-        System.out.println("\nIngresa nombre completo del contacto a eliminar");
-        String nombre = scanner.nextLine();
-        Contacto contacto = service.buscaContacto(nombre);
-        service.eliminarContacto(contacto);
-        System.out.println("Contacto eliminado exitosamente");
+        try {
+            String nombre = validateInput("Ingresa nombre completo del contacto a eliminar");
+            Contacto contacto = service.buscaContacto(nombre);
+            service.eliminarContacto(contacto);
+            System.out.println("\nContacto eliminado exitosamente");
+        } catch (ContactoNotFoundException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private static void espacioDeMiAgenda() {
